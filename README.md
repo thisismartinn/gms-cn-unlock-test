@@ -7,7 +7,17 @@
 ---
 
 ### ⚠️ 免责与风险提示
-本模块由 AI 辅助与作者联合开发，作者非专业安卓底层开发者。所有 Shell 脚本与 XML 配置文件均为 **明文公开、未做任何加密**，刷入前可自行审阅。刷入前请务必备份系统，因使用本模块导致的任何设备异常，使用者自行承担风险。
+* **自行承担风险**：本模块由 AI 辅助与作者联合开发，作者非专业安卓底层开发者。
+* **明文透明**：所有 Shell 脚本与 XML 配置文件均为 **明文公开、未做任何加密**，刷入前可自行审阅。
+* **风险自负**：刷入前请务必备份系统/数据，因刷入、配置不当或系统兼容性导致的任何设备异常、卡屏、死机等问题，使用者需自行承担全部风险与责任。
+
+---
+
+### 📱 系统要求与兼容性
+
+- **分区规范要求**：必须具备 `/product` 分区结构，全量特权配置文件将挂载至 `/product/etc/permissions/` 目录之下。
+- **理论兼容版本**：理论支持 **Android 10 至 Android 17** 所有遵循标准 `/product` 分区的国行及第三方本土化 ROM。
+- **环境依赖**：特权 XML 文件的生效需配合 **元模块/挂载模块 (OverlayFS / Magic Mount)** 环境使用。
 
 ---
 
@@ -29,8 +39,7 @@
    - `/my_heytap/etc/permissions/my_heytap_cn_gms_features.xml`
 
 2. **GMS 特权全量补全**
-   内置完整 GMS 特权许可 XML，全量补齐并挂载至现代 Android 通用的 `/product/etc/permissions/` 目录。
-   *(注：特权文件挂载需配合 **元模块/挂载模块 (OverlayFS / Magic Mount)** 环境使用)*
+   内置完整 GMS 特权许可 XML，全量补齐并标准化挂载至 `/product/etc/permissions/` 路径。
 
 3. **Quick Share 智能唤醒与状态验证**
    针对部分国产系统隐藏 Quick Share 入口的问题，模块内置唤醒逻辑与状态验证：
@@ -55,7 +64,17 @@
 ---
 
 ### ⚠️ Disclaimer & Risk Warning
-This module is co-developed by the author with AI assistance. The author is not a professional Android low-level developer. All Shell scripts and XML configuration files are **open source in plain text with no encryption**, allowing full review prior to flashing. Please backup your system before flashing. Users assume all risks for any system anomalies caused by using this module.
+* **Use at Your Own Risk**: This module is co-developed by the author with AI assistance. The author is not a professional Android low-level developer.
+* **Transparent Code**: All Shell scripts and XML configuration files are **open source in plain text with no encryption**, allowing full review prior to flashing.
+* **Liability Notice**: Please backup your system/data before flashing. The user assumes all responsibilities and risks for any device anomalies, bootloops, or system crashes caused by using or misconfiguring this module.
+
+---
+
+### 📱 System Requirements & Compatibility
+
+- **Partition Structure Requirement**: The system must feature a `/product` partition. All privileged permission files will be mounted under `/product/etc/permissions/`.
+- **Theoretical Compatibility**: Theoretically supports **Android 10 through Android 17** on any CN stock or custom OEM ROMs adhering to standard `/product` partition specifications.
+- **Environment Dependency**: Mounting privileged XML files requires a **Meta-module / Mount Module (OverlayFS / Magic Mount)** environment.
 
 ---
 
@@ -78,7 +97,6 @@ This module is co-developed by the author with AI assistance. The author is not 
 
 2. **Full GMS Privileged Permissions Completion**
    Includes complete GMS privileged permission XMLs, fully mounted to the modern Android standard path `/product/etc/permissions/`.
-   *(Note: Mounting privileged permission files requires a **Meta-module / Mount Module (OverlayFS / Magic Mount)** environment).*
 
 3. **Quick Share Smart Trigger & Status Verification**
    Resolves the issue where Quick Share is hidden on certain OEM systems:

@@ -42,7 +42,6 @@ If it still doesn't work, attach the diagnostics file to an issue.
 
 ### Known issues
 
-- Another module that patches the same permission files can override this one. Keep only one active.
 - The Quick Share tile may not show up in HyperOS's control center, even though GMS provides it. Quick Share is still reachable from the share sheet and the Settings page.
 
 ## Credits

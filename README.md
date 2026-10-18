@@ -45,6 +45,16 @@ If it still doesn't work, attach the diagnostics file to an issue.
 - Another module that patches the same permission files can override this one. Keep only one active.
 - The Quick Share tile may not show up in HyperOS's control center, even though GMS provides it. Quick Share is still reachable from the share sheet and the Settings page.
 
+## Android Auto as a system app (experimental, separate module)
+
+Android Auto fails with "communication error 22 - not preinstalled" when it is a normal user-installed app. The `android-auto/` folder builds a **separate** module that installs the Play Store copy as a privileged system app, so it can be removed independently of the CN fix.
+
+- Install Android Auto from the Play Store first, then flash `*-android-auto.zip`.
+- It needs a mount provider on KernelSU (a metamodule such as meta-overlayfs or mountify), because it adds a new directory under `/product/priv-app`.
+- The privileged-permission whitelist is built at install time from the permissions your installed Android Auto actually requests. Reinstall the module after Android Auto updates.
+- If a boot never completes, the module disables itself on the next boot. You can also disable it from KernelSU safe mode.
+- Untested beyond a mock install; back up first. Use its Action button to check whether Android Auto now shows the `SYSTEM` flag.
+
 ## Credits
 
 Core logic from [fei-ke/unlock-cn-gms](https://github.com/fei-ke/unlock-cn-gms).

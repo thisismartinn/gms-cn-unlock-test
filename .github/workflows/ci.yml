@@ -47,7 +47,9 @@ jobs:
             
       - name: Pack Release
         if: github.ref_type == 'tag'
-        run: zip -r ${{ github.event.repository.name }}-${{ steps.read_prop.outputs.version }}.zip . -x ".*"
+        run: |
+          zip -r ${{ github.event.repository.name }}-${{ steps.read_prop.outputs.version }}.zip . -x ".*" "android-auto/*"
+          (cd android-auto && zip -r ../${{ github.event.repository.name }}-android-auto.zip . -x ".*")
 
       - name: Create Release
         if: github.ref_type == 'tag'

@@ -1,0 +1,6 @@
+id=com.fei_ke.unlockcngms.androidauto
+name=Unlock CN GMS - Android Auto
+version=v0.1.0
+versionCode=1
+author=fei-ke
+description=EXPERIMENTAL: install Android Auto as a privileged system app so it stops failing with "communication error 22 - not preinstalled". Needs a KernelSU metamodule.

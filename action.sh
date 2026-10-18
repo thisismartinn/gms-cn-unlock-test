@@ -12,6 +12,24 @@ for p in ro.product.manufacturer ro.product.model ro.build.version.release \
     echo "$p=$(getprop $p)"
 done
 
+echo; echo "== root environment =="
+magisk -V 2>&1 | head -1
+ksud -V 2>&1 | head -1
+date; uptime
+echo "module installed: $(stat -c %y "${0%/*}/module.prop")"
+for m in /data/adb/modules/*; do
+    echo "$m: $(ls -a $m | grep -E '^(disable|remove|skip_mount)$' | tr '\n' ' ')"
+done
+
+echo; echo "== other modules touching the same files =="
+find /data/adb/modules -type f \( -name 'cn.google.services.xml' -o -name 'com.gnss.bds_preference.xml' \) 2>/dev/null
+find /data/adb/modules/gms_nexus -type f ! -name '*.png' 2>/dev/null | head -40
+
+echo; echo "== this module: copies patched? (want 0) and mount script =="
+grep -c 'cn.google.services' "${0%/*}/product/etc/permissions/cn.google.services.xml" "${0%/*}/com.gnss.bds_preference.xml" 2>&1
+cat "${0%/*}/post-fs-data.sh" 2>&1
+grep -E 'bds_preference|cn.google|overlay' /proc/self/mountinfo | head -20
+
 echo; echo "== is the CN flag still declared? (want: false) =="
 cmd package has-feature cn.google.services 2>&1
 pm list features 2>/dev/null | grep -iE 'cn\.|google'

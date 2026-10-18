@@ -73,6 +73,18 @@ for origin in $FILES; do
     sed -i '/cn.google.services/d' $target
     sed -i '/services_updater/d' $target
     ui_print "modify $origin"
+
+    # Overlay/magic mount needs a mount provider on KernelSU and silently does
+    # nothing without one, so bind-mount these files ourselves as well.
+    case "$origin" in
+        *my_bigball*|*my_product*|*my_heytap*|/odm/*|/mi_ext/*) ;;
+        *)
+            mkdir -p "$(dirname "$MODPATH/bind$origin")"
+            cp -f "$target" "$MODPATH/bind$origin"
+            echo "mount -o ro,bind \${0%/*}/bind$origin $origin" >> $MODPATH/post-fs-data.sh
+            need_bind_mount=true
+            ;;
+    esac
 done
 
 if $need_bind_mount; then

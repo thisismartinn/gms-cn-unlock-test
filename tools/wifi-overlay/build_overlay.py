@@ -6,8 +6,8 @@ The target's resources.arsc can be pulled from the device with:
     unzip -p /system_ext/priv-app/Settings/Settings.apk resources.arsc > Settings.arsc
 
 Usage:
-    build_overlay.py --arsc Settings.arsc --target com.android.settings \
-        --out WifiLabelSettings.apk --aapt2 aapt2 --android-jar android.jar
+    build_overlay.py --arsc Settings.arsc --out WifiLabelSettings.apk \
+        --aapt2 aapt2 --android-jar android.jar
 """
 import argparse, os, re, shutil, subprocess, sys, tempfile
 
@@ -26,7 +26,7 @@ def default_strings(arsc_path):
     for m in re.finditer(r'<string name="([^"]+)"[^>]*>(.*?)</string>', xml, re.S):
         if OLD in m.group(2):
             out[m.group(1)] = m.group(2)
-    return out
+    return pkg, out
 
 
 def escape(value):
@@ -44,7 +44,7 @@ def escape(value):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--arsc', required=True)
-    ap.add_argument('--target', required=True)
+    ap.add_argument('--target', help='target package (default: read from the arsc)')
     ap.add_argument('--out', required=True)
     ap.add_argument('--aapt2', default='aapt2')
     ap.add_argument('--android-jar', required=True)
@@ -52,7 +52,8 @@ def main():
     ap.add_argument('--priority', default='9999')
     a = ap.parse_args()
 
-    strings = default_strings(a.arsc)
+    pkg_in_arsc, strings = default_strings(a.arsc)
+    a.target = a.target or pkg_in_arsc
     if not strings:
         sys.exit('no default strings containing %r found' % OLD)
 
@@ -68,7 +69,7 @@ def main():
 
     # targetSdk < 29 on purpose: Q+ overlays are always checked against the
     # target's <overlayable> declarations, and Xiaomi's apps declare none.
-    pkg = 'com.fei_ke.unlockcngms.wifilabel.' + a.target.split('.')[-1]
+    pkg = 'com.fei_ke.unlockcngms.wifilabel.' + re.sub(r'\W', '_', a.target.split('.')[-1])
     with open(os.path.join(work, 'AndroidManifest.xml'), 'w') as f:
         f.write(f'''<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="{pkg}">
     <uses-sdk android:minSdkVersion="28" android:targetSdkVersion="28"/>

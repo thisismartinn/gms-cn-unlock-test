@@ -1,0 +1,6 @@
+id=com.fei_ke.unlockcngms.wifilabel
+name=Unlock CN GMS - Wi-Fi label
+version=v0.1.0
+versionCode=1
+author=fei-ke
+description=Sets ro.product.locale=en-US on CN ROMs. String overlay (WLAN to Wi-Fi) is not included yet.

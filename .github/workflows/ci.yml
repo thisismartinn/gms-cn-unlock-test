@@ -48,8 +48,10 @@ jobs:
       - name: Pack Release
         if: github.ref_type == 'tag'
         run: |
-          zip -r ${{ github.event.repository.name }}-${{ steps.read_prop.outputs.version }}.zip . -x ".*" "android-auto/*"
-          (cd android-auto && zip -r ../${{ github.event.repository.name }}-android-auto.zip . -x ".*")
+          zip -r ${{ github.event.repository.name }}-${{ steps.read_prop.outputs.version }}.zip . -x ".*" "android-auto/*" "wlan-to-wifi/*"
+          for d in android-auto wlan-to-wifi; do
+            (cd $d && zip -r ../${{ github.event.repository.name }}-$d.zip . -x ".*")
+          done
 
       - name: Create Release
         if: github.ref_type == 'tag'

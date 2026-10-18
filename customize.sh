@@ -13,11 +13,22 @@ FILES="\
 /my_product/etc/permissions/oplus_google_cn_gms_features.xml
 /my_heytap/etc/permissions/my_heytap_cn_gms_features.xml"
 
+# Fallback: also pick up any other permission/sysconfig file that declares the
+# CN flag, so new ROMs (e.g. HyperOS with /mi_ext) work without a path update.
+for dir in /system /system_ext /vendor /product /odm /mi_ext; do
+    [ -d "$dir/etc" ] || continue
+    FILES="$FILES
+$(grep -rls 'cn.google.services' "$dir/etc/permissions" "$dir/etc/sysconfig" 2>/dev/null)"
+done
+
 found=false
 need_bind_mount=false
+seen="|"
 
 for origin in $FILES; do
     [ ! -e "$origin" ] && continue
+    case "$seen" in *"|$origin|"*) continue ;; esac
+    seen="$seen$origin|"
     found=true
 
 	case "$origin" in
@@ -41,10 +52,13 @@ for origin in $FILES; do
 				heytap_cn_features_target=$MODPATH/my_heytap_cn_features.xml
 			fi
 			;;
-		/odm/*)
+		/odm/*|/mi_ext/*)
 			target=$MODPATH/$(basename $origin)
 			echo "mount -o ro,bind \${0%/*}/$(basename $origin) $origin" >> $MODPATH/post-fs-data.sh
 			need_bind_mount=true
+			;;
+		/system_ext/*)
+			target=$MODPATH/system$origin
 			;;
 		*system*)
 			target=$MODPATH$origin

@@ -1,112 +1,88 @@
-[English README](#gms-nexus-proxy-english) | [中文说明](#gms-nexus-proxy)
+[English](#unlock-cn-gms-english) | [中文说明](#unlock-cn-gms)
 
-# GMS Nexus Proxy
+# Unlock CN GMS
 
-**GMS Nexus Proxy** 是一个一体化 GMS 补全与解锁 CN 限制的系统级代理模块。内置解锁逻辑与全量特权许可文件，彻底解决国行系统及本土化 ROM 上 Google 快速分享（Quick Share）、FCM 权限缺失及时间轴/位置报告被封锁的问题。
+去除国行系统对 Google Play 服务 (GMS) 的限制：扫描并清理系统中声明 `cn.google.services` 的权限文件，解锁 Quick Share（快速分享）、位置记录 / 地图时间轴等功能。
 
----
-
-### ⚠️ 免责与风险提示
-* **自行承担风险**：本模块由 AI 辅助与作者联合开发，作者非专业安卓底层开发者。
-* **明文透明**：所有 Shell 脚本与 XML 配置文件均为 **明文公开、未做任何加密**，刷入前可自行审阅。
-* **风险自负**：刷入前请务必备份系统/数据，因刷入、配置不当或系统兼容性导致的任何设备异常、卡屏、死机等问题，使用者需自行承担全部风险与责任。
+基于 [fei-ke/unlock-cn-gms](https://github.com/fei-ke/unlock-cn-gms) 修改。
 
 ---
 
-### 📱 系统要求与兼容性
+### ⚠️ 风险提示
+* 脚本均为明文，刷入前请自行审阅。
+* 刷入前请备份数据；因使用本模块导致的任何问题由使用者自行承担。
 
-- **分区规范要求**：必须具备 `/product` 分区结构，全量特权配置文件将挂载至 `/product/etc/permissions/` 目录之下。
-- **理论兼容版本**：理论支持 **Android 10 至 Android 17** 所有遵循标准 `/product` 分区的国行及第三方本土化 ROM。
-- **环境依赖**：特权 XML 文件的生效需配合 **元模块/挂载模块 (OverlayFS / Magic Mount)** 环境使用。
+### ✅ 已测试环境
+* Xiaomi HyperOS 4（OS4.0.4.0.XPACNXM，Android 17，国行），KernelSU：Quick Share 可用。
+* 其他机型 / 系统理论上可用，但未经验证。
 
----
+### 🚀 工作原理
+1. 安装时扫描 `/system`、`/system_ext`、`/vendor`、`/product`、`/odm`、`/mi_ext` 下的 `etc/permissions` 与 `etc/sysconfig`，以及固定的已知路径（含 ColorOS、Flyme、OriginOS、ZTE 等），找到声明 `cn.google.services` 的文件。
+2. 复制这些文件并删除 `cn.google.services` 与 `services_updater` 相关行。
+3. 开机时由 `post-fs-data.sh` 用 `mount --bind` 将修改后的文件挂载回原路径。**不依赖 KernelSU 的元模块 / OverlayFS / Magic Mount**。同时仍保留 `system/` 目录供 Magisk 使用。
+4. **本模块不包含** GMS 特权权限 XML，也不会自动拉起 Quick Share；这两项需要系统本身已具备。
 
-### 🚀 核心特性
+### 🔍 验证与排查
+刷入后**重启**，然后在 Root 管理器中点击模块的 **操作 (Action)** 按钮，或执行：
 
-1. **一体化解锁 CN 限制（基于 unlock-cn-gms v3.8）**
-   模块内置自动化扫描逻辑，自动查找并清理系统中声明 `cn.google.services` 的限制标签（彻底移除国行 GMS 封锁，解锁 Google 位置记录与地图时间轴限制）。
-   
-   **自动处理及替换路径列表：**
-   - `/system/etc/permissions/services.cn.google.xml`
-   - `/system/etc/permissions/com.oppo.features.cn_google.xml`
-   - `/vendor/etc/permissions/services.cn.google.xml`
-   - `/product/etc/permissions/services.cn.google.xml`
-   - `/product/etc/permissions/cn.google.services.xml`
-   - `/product/etc/sysconfig/cn_feature.xml`
-   - `/odm/etc/permissions/com.gnss.bds_preference.xml`
-   - `/my_bigball/etc/permissions/oplus_google_cn_gms_features.xml`
-   - `/my_product/etc/permissions/oplus_google_cn_gms_features.xml`
-   - `/my_heytap/etc/permissions/my_heytap_cn_gms_features.xml`
+```
+su -c sh /data/adb/modules/com.fei_ke.unlockcngms/action.sh
+```
 
-2. **GMS 特权全量补全**
-   内置完整 GMS 特权许可 XML，全量补齐并标准化挂载至 `/product/etc/permissions/` 路径。
+该脚本不会修改系统，只会输出诊断信息并保存到 `/data/local/tmp/unlockcngms-diag.txt`，重点检查：
 
-3. **Quick Share 智能唤醒与状态验证**
-   针对部分国产系统隐藏 Quick Share 入口的问题，模块内置唤醒逻辑与状态验证：
-   - **首次开机/更新后**：进入桌面约 5 秒，系统后台会自动强制调起快速分享页面并保持显示在前台，完成组件的挂载激活。
-   - **验证方法**：若开机未自动触发，可在 Root 管理器中点击模块右侧的 **【操作 / 执行】** 按钮手动调起。调起后，进入 **Google 设置 → 所有服务 → 已连接的设备和分享**，若能正常看见并进入“快速分享”设置页面且功能开关可用，即代表挂载成功。
+- `cmd package has-feature cn.google.services` 应为 `false`
+- “files that still mention cn.google.services” 应为空
+- `mountinfo` 中应能看到本模块的 bind mount
 
----
+若仍无法使用，请在 Issue 中附上该文件。注意：若同时安装了其他修改相同权限文件的模块，可能互相覆盖，请只保留一个。
 
-### 🙏 致谢与开源声明
+随后进入 **Google 设置 → 所有服务 → 已连接的设备和分享**，检查是否出现“快速分享”。
 
-本模块的核心解锁 CN 限制逻辑基于 [fei-ke/unlock-cn-gms](https://github.com/fei-ke/unlock-cn-gms) 项目重构与扩展，特此感谢原作者的卓越贡献。
-
-本项目遵循开源社区“代码明文、尊重原创”的原则。如有任何版权或许可相关建议，欢迎提交 Issue。
+### 🙏 致谢
+核心逻辑来自 [fei-ke/unlock-cn-gms](https://github.com/fei-ke/unlock-cn-gms)。
 
 ---
 ---
 
-# GMS Nexus Proxy (English)
+# Unlock CN GMS (English)
 
-**GMS Nexus Proxy** is an all-in-one system proxy module designed for GMS completion and unbinding CN restrictions. It integrates unlocking logic with full privileged permission XML files, completely resolving issues on CN firmware or regional ROMs such as missing Quick Share, FCM privilege restrictions, and blocked Google Location History / Maps Timeline.
+Removes the CN-ROM restrictions on Google Play services (GMS). It finds permission files that declare `cn.google.services` and strips them, unlocking Quick Share, Location History / Maps Timeline and similar features.
 
----
-
-### ⚠️ Disclaimer & Risk Warning
-* **Use at Your Own Risk**: This module is co-developed by the author with AI assistance. The author is not a professional Android low-level developer.
-* **Transparent Code**: All Shell scripts and XML configuration files are **open source in plain text with no encryption**, allowing full review prior to flashing.
-* **Liability Notice**: Please backup your system/data before flashing. The user assumes all responsibilities and risks for any device anomalies, bootloops, or system crashes caused by using or misconfiguring this module.
+Based on [fei-ke/unlock-cn-gms](https://github.com/fei-ke/unlock-cn-gms).
 
 ---
 
-### 📱 System Requirements & Compatibility
+### ⚠️ Disclaimer
+* All scripts are plain text; review them before flashing.
+* Back up your data first. You use this module at your own risk.
 
-- **Partition Structure Requirement**: The system must feature a `/product` partition. All privileged permission files will be mounted under `/product/etc/permissions/`.
-- **Theoretical Compatibility**: Theoretically supports **Android 10 through Android 17** on any CN stock or custom OEM ROMs adhering to standard `/product` partition specifications.
-- **Environment Dependency**: Mounting privileged XML files requires a **Meta-module / Mount Module (OverlayFS / Magic Mount)** environment.
+### ✅ Tested on
+* Xiaomi HyperOS 4 (OS4.0.4.0.XPACNXM, Android 17, CN) with KernelSU: Quick Share works.
+* Other devices and ROMs should work in theory but are unverified.
 
----
+### 🚀 How it works
+1. At install time it scans `etc/permissions` and `etc/sysconfig` on `/system`, `/system_ext`, `/vendor`, `/product`, `/odm` and `/mi_ext`, plus a list of known OEM paths (ColorOS, Flyme, OriginOS, ZTE, …), for files declaring `cn.google.services`.
+2. It copies each file and deletes the `cn.google.services` and `services_updater` lines.
+3. On boot, `post-fs-data.sh` bind-mounts the patched files over the originals. **No KernelSU meta-module / OverlayFS / Magic Mount is required.** The `system/` copy is still shipped for Magisk.
+4. The module does **not** ship GMS privileged-permission XMLs and does **not** auto-launch Quick Share; the ROM must already provide what Quick Share needs.
 
-### 🚀 Key Features
+### 🔍 Verifying and troubleshooting
+After flashing, **reboot**, then press the module's **Action** button in your root manager, or run:
 
-1. **Integrated CN Restriction Unlocking (Based on unlock-cn-gms v3.8)**
-   Built-in automated scanning logic that identifies and cleans `cn.google.services` restriction flags within system permissions (completely removing CN GMS blockades, unlocking Google Location History and Maps Timeline restrictions).
+```
+su -c sh /data/adb/modules/com.fei_ke.unlockcngms/action.sh
+```
 
-   **Automatically Processed & Replaced Paths:**
-   - `/system/etc/permissions/services.cn.google.xml`
-   - `/system/etc/permissions/com.oppo.features.cn_google.xml`
-   - `/vendor/etc/permissions/services.cn.google.xml`
-   - `/product/etc/permissions/services.cn.google.xml`
-   - `/product/etc/permissions/cn.google.services.xml`
-   - `/product/etc/sysconfig/cn_feature.xml`
-   - `/odm/etc/permissions/com.gnss.bds_preference.xml`
-   - `/my_bigball/etc/permissions/oplus_google_cn_gms_features.xml`
-   - `/my_product/etc/permissions/oplus_google_cn_gms_features.xml`
-   - `/my_heytap/etc/permissions/my_heytap_cn_gms_features.xml`
+It changes nothing; it prints diagnostics and saves them to `/data/local/tmp/unlockcngms-diag.txt`. Check that:
 
-2. **Full GMS Privileged Permissions Completion**
-   Includes complete GMS privileged permission XMLs, fully mounted to the modern Android standard path `/product/etc/permissions/`.
+- `cmd package has-feature cn.google.services` is `false`
+- "files that still mention cn.google.services" is empty
+- `mountinfo` shows this module's bind mounts
 
-3. **Quick Share Smart Trigger & Status Verification**
-   Resolves the issue where Quick Share is hidden on certain OEM systems:
-   - **First Boot / Post-Update**: Approx. 5 seconds after reaching the desktop, the system automatically launches the Quick Share interface and keeps it in the foreground to complete component activation.
-   - **Verification Method**: If not triggered automatically, click the **[Action / Execute]** button on the right side of the module in your Root Manager. Then go to **Google Settings → All Services → Connected devices & sharing**. If Quick Share is visible and functional, the module is successfully mounted.
+If it still doesn't work, attach that file to an issue. Another module that patches the same permission files can override this one, so keep only one active.
 
----
+Then open **Google Settings → All services → Connected devices & sharing** and look for Quick Share.
 
-### 🙏 Credits & Open Source Declaration
-
-The core CN unlocking logic of this module is based on and refactored from [fei-ke/unlock-cn-gms](https://github.com/fei-ke/unlock-cn-gms). Special thanks to the original author for the outstanding work.
-
-This project follows the principles of open-source transparency and respect for original creators. All modifications remain open source. If you have any copyright or licensing suggestions, feel free to submit an Issue.
+### 🙏 Credits
+Core logic from [fei-ke/unlock-cn-gms](https://github.com/fei-ke/unlock-cn-gms).

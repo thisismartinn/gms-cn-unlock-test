@@ -1,6 +1,6 @@
 id=com.fei_ke.unlockcngms.wifilabel
-name=Unlock CN GMS - Wi-Fi label
-version=v0.2.0
-versionCode=3
+name=WLAN to Wi-Fi
+version=v0.2.1
+versionCode=4
 author=fei-ke
 description=EXPERIMENTAL: shows Wi-Fi instead of WLAN in Settings and the control center (English UI) via static overlays. Needs a KernelSU metamodule.

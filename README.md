@@ -54,14 +54,15 @@ Android Auto fails with "communication error 22 - not preinstalled" when it is a
 - If a boot never completes, the module disables itself on the next boot. You can also disable it from KernelSU safe mode.
 - Untested beyond a mock install; back up first. Use its Action button to check whether Android Auto now shows the `SYSTEM` flag.
 
-## Wi-Fi label instead of WLAN (experimental, separate module)
+## WLAN to Wi-Fi (experimental, separate module)
 
-CN builds of HyperOS label Wi-Fi as "WLAN" even in English. The `wlan-to-wifi/` folder builds a **separate** module with two static overlays (Settings and System UI) that replace "WLAN" with "Wi-Fi" in the default (English) strings. Other languages are untouched.
+CN builds of HyperOS label Wi-Fi as "WLAN" even in English. The `wlan-to-wifi/` folder builds a **separate** module with static overlays for Settings, System UI (control center) and the Phone app (SIM / Wi-Fi calling screens) that replace "WLAN" with "Wi-Fi" in the English strings, including the carrier-specific variants. Other languages are untouched.
 
 - It needs a KernelSU metamodule (meta-overlayfs or mountify) to mount `system_ext/overlay`.
-- The overlays target SDK 28 on purpose, because Xiaomi's Settings and System UI declare no overridable resources and newer overlays are rejected in that case. Whether HyperOS applies them is unverified: press the module's Action button, which runs `cmd overlay lookup` and should print `Wi-Fi`.
-- Regenerate for another ROM version with `tools/wifi-overlay/build_overlay.py` (see its docstring for the inputs).
-- Only Settings and System UI are covered. Other apps (Security Center, framework) still say WLAN.
+- In KernelSU Manager, turn off **Unmount modules** for Settings, System UI and Phone. By default KernelSU hides module mounts from apps, and then the app cannot open its overlay file (`cmd overlay lookup` says Wi-Fi but the screen still says WLAN).
+- The overlays target SDK 28 on purpose, because Xiaomi's apps declare no overridable resources and newer overlays are rejected in that case. Verified on HyperOS 4 (Settings and System UI). The Action button runs `cmd overlay lookup` to check each overlay.
+- Regenerate for another ROM version, or add another app, with `tools/wifi-overlay/build_overlay.py` (see its docstring for the inputs).
+- Other apps (Security Center, Cloud, framework, ...) still say WLAN.
 
 ## Credits
 

@@ -1,6 +1,6 @@
 id=com.fei_ke.unlockcngms.wifilabel
 name=WLAN to Wi-Fi
-version=v0.2.1
-versionCode=4
+version=v0.3.0
+versionCode=5
 author=fei-ke
-description=EXPERIMENTAL: shows Wi-Fi instead of WLAN in Settings and the control center (English UI) via static overlays. Needs a KernelSU metamodule.
+description=Shows Wi-Fi instead of WLAN in Settings, the control center and the Phone app (English UI) via static overlays. Needs a KernelSU metamodule.

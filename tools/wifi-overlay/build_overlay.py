@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build a static RRO that replaces "WLAN" with "Wi-Fi" in a target app's default strings.
+"""Build a static RRO that replaces "WLAN" with "Wi-Fi" in a target app's English strings.
 
 Needs: androguard (pip), aapt2, an android.jar, and the JDK's keytool/jarsigner.
 The target's resources.arsc can be pulled from the device with:
@@ -16,29 +16,44 @@ from androguard.core.axml import ARSCParser
 OLD, NEW = 'WLAN', 'Wi-Fi'
 
 
-def default_strings(arsc_path):
+def collect_strings(arsc_path):
+    """Return (package, {qualifier: {name: value}}) for every config that says WLAN.
+
+    A target can carry several versions of one string (carrier mcc/mnc variants,
+    an "en" table, ...) and Android prefers the more specific one, so each config
+    needs its own override. Languages other than English are left alone.
+    """
     arsc = ARSCParser(open(arsc_path, 'rb').read())
     pkg = arsc.get_packages_names()[0]
-    xml = arsc.get_string_resources(pkg, '\x00\x00')
-    if isinstance(xml, bytes):
-        xml = xml.decode('utf-8', 'replace')
-    out = {}
-    for m in re.finditer(r'<string name="([^"]+)"[^>]*>(.*?)</string>', xml, re.S):
-        if OLD in m.group(2):
-            out[m.group(1)] = m.group(2)
-    return pkg, out
+    names = set()
+    for loc in arsc.get_locales(pkg):
+        xml = arsc.get_string_resources(pkg, loc)
+        if isinstance(xml, bytes):
+            xml = xml.decode('utf-8', 'replace')
+        names.update(re.findall(r'<string name="([^"]+)"', xml))
+    by_qualifier = {}
+    for name in sorted(names):
+        rid = arsc.get_res_id_by_key(pkg, 'string', name)
+        if not rid:
+            continue
+        for cfg, val in arsc.get_resolved_res_configs(rid):
+            if not isinstance(val, str) or OLD not in val:
+                continue
+            lang = (cfg.get_language_and_region() or '').strip('\x00')
+            if lang and not lang.startswith('en'):
+                continue
+            qualifier = (cfg.get_qualifier() or '').strip('\x00')
+            by_qualifier.setdefault(qualifier, {})[name] = val
+    return pkg, by_qualifier
 
 
 def escape(value):
     """Re-escape a decoded string value for aapt2's resource XML rules."""
-    cdata = value.startswith('<![CDATA[') and value.endswith(']]>')
-    if cdata:
-        value = value[len('<![CDATA['):-len(']]>')]
     value = value.replace('\\', '\\\\').replace("'", "\\'").replace('"', '\\"')
     value = value.replace('\n', '\\n').replace('\t', '\\t')
     if value[:1] in '@?':
         value = '\\' + value
-    return f'<![CDATA[{value}]]>' if cdata else value
+    return value.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
 
 
 def main():
@@ -52,20 +67,23 @@ def main():
     ap.add_argument('--priority', default='9999')
     a = ap.parse_args()
 
-    pkg_in_arsc, strings = default_strings(a.arsc)
+    pkg_in_arsc, by_qualifier = collect_strings(a.arsc)
     a.target = a.target or pkg_in_arsc
-    if not strings:
-        sys.exit('no default strings containing %r found' % OLD)
+    if not by_qualifier:
+        sys.exit('no strings containing %r found' % OLD)
 
     work = tempfile.mkdtemp(prefix='wifi-overlay-')
-    res = os.path.join(work, 'res', 'values')
-    os.makedirs(res)
-    with open(os.path.join(res, 'strings.xml'), 'w', encoding='utf-8') as f:
-        f.write('<?xml version="1.0" encoding="utf-8"?>\n<resources>\n')
-        for name, value in strings.items():
-            fmt = ' formatted="false"' if '%' in value else ''
-            f.write(f'    <string name="{name}"{fmt}>{escape(value.replace(OLD, NEW))}</string>\n')
-        f.write('</resources>\n')
+    total = 0
+    for qualifier, strings in by_qualifier.items():
+        res = os.path.join(work, 'res', 'values' + ('-' + qualifier if qualifier else ''))
+        os.makedirs(res)
+        with open(os.path.join(res, 'strings.xml'), 'w', encoding='utf-8') as f:
+            f.write('<?xml version="1.0" encoding="utf-8"?>\n<resources>\n')
+            for name, value in strings.items():
+                fmt = ' formatted="false"' if '%' in value else ''
+                f.write(f'    <string name="{name}"{fmt}>{escape(value.replace(OLD, NEW))}</string>\n')
+            f.write('</resources>\n')
+        total += len(strings)
 
     # targetSdk < 29 on purpose: Q+ overlays are always checked against the
     # target's <overlayable> declarations, and Xiaomi's apps declare none.
@@ -94,7 +112,7 @@ def main():
     os.makedirs(os.path.dirname(os.path.abspath(a.out)), exist_ok=True)
     shutil.copy(os.path.join(work, 'signed.apk'), a.out)
     shutil.rmtree(work)
-    print(f'{a.target}: {len(strings)} strings -> {a.out}')
+    print(f'{a.target}: {total} strings in {len(by_qualifier)} configs -> {a.out}')
 
 
 if __name__ == '__main__':

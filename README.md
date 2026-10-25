@@ -64,6 +64,10 @@ CN builds of HyperOS label Wi-Fi as "WLAN" even in English. The `wlan-to-wifi/` 
 - Regenerate for another ROM version, or add another app, with `tools/wifi-overlay/build_overlay.py` (see its docstring for the inputs).
 - Other apps (Security Center, Cloud, framework, ...) still say WLAN.
 
+## WLAN to Wi-Fi as an Xposed module (experimental)
+
+`wlan-to-wifi-xposed/` is the same idea as the overlay module above, built on the modern Xposed API (libxposed 101/102) for Vector / LSPosed. It rewrites `WLAN` to `Wi-Fi` in the text apps load from resources, so it needs no metamodule and no "Unmount modules" changes, and covers any app you add to its scope. Use one or the other. See its README for install, scope and how to verify with `logcat`.
+
 ## Credits
 
 Core logic from [fei-ke/unlock-cn-gms](https://github.com/fei-ke/unlock-cn-gms).

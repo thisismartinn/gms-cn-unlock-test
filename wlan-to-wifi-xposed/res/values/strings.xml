@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">WLAN to Wi-Fi (Xposed)</string>
+    <string name="xposed_description">Shows Wi-Fi instead of WLAN in the apps you enable it for. Recommended scope: Settings, System UI and Phone.</string>
+</resources>

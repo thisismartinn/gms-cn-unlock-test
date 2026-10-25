@@ -48,7 +48,7 @@ jobs:
       - name: Pack Release
         if: github.ref_type == 'tag'
         run: |
-          zip -r ${{ github.event.repository.name }}-${{ steps.read_prop.outputs.version }}.zip . -x ".*" "android-auto/*" "wlan-to-wifi/*" "tools/*"
+          zip -r ${{ github.event.repository.name }}-${{ steps.read_prop.outputs.version }}.zip . -x ".*" "android-auto/*" "wlan-to-wifi/*" "wlan-to-wifi-xposed/*" "tools/*"
           for d in android-auto wlan-to-wifi; do
             (cd $d && zip -r ../${{ github.event.repository.name }}-$d.zip . -x ".*")
           done
